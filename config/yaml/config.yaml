@@ -3,6 +3,7 @@ gateway:
     - "/public"
     - "/health"
     - "/api/portal/register"
+    - "/api/portal/login"
   sgPortalURL: "http://localhost:8080/token/validate"
   keyFile: "/home/jayesh/development/Softgen/sg-gateway/.backup/keystore.json"
   services:

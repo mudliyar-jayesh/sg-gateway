@@ -59,7 +59,7 @@ func ReverseProxy(config *utils.Config) http.HandlerFunc {
 
 		// Modify the response to log the status code from the backend
 		proxy.ModifyResponse = func(response *http.Response) error {
-			log.Printf("[Response from Backend] Status: %d", response.StatusCode)
+			log.Printf("[Response from Backend] Status: %d | message: %v", response.StatusCode, response.Body)
 			return nil
 		}
 
