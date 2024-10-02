@@ -10,7 +10,17 @@ import (
 	"time"
 )
 
+var services map[string]string
+
+func LoadServiceMappings(configServices map[string]string) {
+	services = configServices
+}
+
 func proxyRequest(method, destination string, r *http.Request) (string, error) {
+	if r.URL.RawQuery != "" {
+		destination = destination + "?" + r.URL.RawQuery
+	}
+
 	request, err := http.NewRequest(method, destination, r.Body)
 	if err != nil {
 		return "", err
@@ -35,9 +45,9 @@ func proxyRequest(method, destination string, r *http.Request) (string, error) {
 }
 
 func ResolveUrl(w http.ResponseWriter, r *http.Request) {
-	services := map[string]string{
+	/*services := map[string]string{
 		"/api/portal": "http://localhost:8080",
-	}
+	}*/
 
 	var wg sync.WaitGroup
 
@@ -89,4 +99,3 @@ func ResolveUrl(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "No response from service", http.StatusGatewayTimeout)
 	}
 }
-

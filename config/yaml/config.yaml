@@ -7,6 +7,7 @@ gateway:
   sgPortalURL: "http://localhost:8080/token/validate"
   keyFile: "/home/jayesh/development/Softgen/sg-gateway/.backup/keystore.json"
   services:
-    bmrm: "http://127.0.0.1:5000"
-    sg_portal: "http://localhost:8080"
-    tally_sync: "http://127.0.0.1:8082"
+    /api/portal: "http://localhost:8080"
+    /api/bmrm: "http://118.139.167.125:45300"
+    /api/ums: "http://118.139.167.125:45200"
+    /api/biz: "http://118.139.167.125:45700"

@@ -3,28 +3,29 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	middleware "sg-gateway/internal/middlewares"
 	"sg-gateway/internal/proxy"
+	utils "sg-gateway/pkg/util/config"
 	/*
-			utils "sg-gateway/pkg/util/config"
 			keystore "sg-gateway/pkg/util/keystore"
-		    "os"
 		    "encoding/base64"
 	*/)
 
 func main() {
+	configPath := os.Getenv("SG_GATEWAY_CONFIG")
+	if configPath == "" {
+		log.Fatal("Environment variable 'SG_GATEWAY_CONFIG' is not set.")
+	}
+
+	// Load configuration
+	config, err := utils.LoadConfig(configPath)
+	if err != nil {
+		log.Fatalf("Error loading config: %v", err)
+	}
+	proxy.LoadServiceMappings(config.Gateway.Services)
 
 	/*
-		configPath := os.Getenv("SG_GATEWAY_CONFIG")
-		if configPath == "" {
-			log.Fatal("Environment variable 'SG_GATEWAY_CONFIG' is not set.")
-		}
-
-		// Load configuration
-		config, err := utils.LoadConfig(configPath)
-		if err != nil {
-			log.Fatalf("Error loading config: %v", err)
-		}
 
 		// Load the secret key and IV from the key file
 		keyStore, err := keystore.LoadKeyStore(config.Gateway.KeyFile)
@@ -57,8 +58,8 @@ func main() {
 	corsHandlers := middleware.CORSMiddleware(mux)
 
 	log.Println("Gateway running on port 45080...")
-	err := http.ListenAndServe(":45080", corsHandlers)
-	if err != nil {
+	httpErr := http.ListenAndServe(":45080", corsHandlers)
+	if httpErr != nil {
 		log.Fatalf("Could not start server: %v", err)
 	}
 }
