@@ -68,7 +68,7 @@ func ResolveUrl(w http.ResponseWriter, r *http.Request) {
 			defer wg.Done()
 
 			// Forward the request to the target service
-			log.Printf("[-] Forwarding URL: %s\n", targetUrl)
+			log.Printf("[==>] Forwarding URL: %s\n", targetUrl)
 			responseBody, err := proxyRequest(r.Method, targetUrl, r)
 			if err != nil {
 				log.Printf("[!] Error from %s: %v\n", targetUrl, err)
@@ -77,7 +77,7 @@ func ResolveUrl(w http.ResponseWriter, r *http.Request) {
 
 			// Ensure only one response is sent to the client
 			responseOnce.Do(func() {
-				log.Printf("[-] Sending response from %s\n", targetUrl)
+				log.Printf("[<==] Forwarding response from %s\n", targetUrl)
 				w.WriteHeader(http.StatusOK)
 				w.Write([]byte(responseBody))
 				responseSent <- true // Notify that a response was sent
