@@ -23,7 +23,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error loading config: %v", err)
 	}
+
+	// apply configurations
 	proxy.LoadServiceMappings(config.Gateway.Services)
+	middleware.LoadValidationConfig(config.Gateway.SgPortalURL, config.Gateway.ExcludedPaths)
 
 	/*
 
@@ -47,7 +50,11 @@ func main() {
 	*/
 	// Initialize mux
 	mux := http.NewServeMux()
-	mux.Handle("/", middleware.Logging(http.HandlerFunc(proxy.ResolveUrl)))
+
+	var bareRequest = http.HandlerFunc(proxy.ResolveUrl)
+	var wrapTokenValidation = middleware.ValidateToken(bareRequest)
+	var wrapLogging = middleware.Logging(wrapTokenValidation)
+	mux.Handle("/", wrapLogging)
 
 	// Middleware for token validation and encryption/decryption
 	/*	mux.Handle("/", middleware.TokenValidationMiddleware(
