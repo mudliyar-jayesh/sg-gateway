@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -11,6 +12,12 @@ import (
 
 var validationUrl string
 var excludedPaths []string
+
+var services map[string]string
+
+func LoadServiceMappings(configServices map[string]string) {
+	services = configServices
+}
 
 func LoadValidationConfig(url string, pathsToExclude []string) {
 	validationUrl = url
@@ -23,6 +30,8 @@ func ValidateToken(next http.Handler) http.Handler {
 		for _, path := range excludedPaths {
 			if strings.HasPrefix(r.URL.Path, path) {
 				// If the path is excluded, no token validation
+				var targetUrl = resolveUrl(nil, r)
+				r.Header.Add("targetUrl", targetUrl)
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -40,6 +49,10 @@ func ValidateToken(next http.Handler) http.Handler {
 		r.Header.Del("token")
 		var userIdStr string = strconv.FormatUint(*tokenInfo.UserId, 10)
 		r.Header.Add("userid", userIdStr)
+
+		var targetUrl = resolveUrl(tokenInfo.TenantInfo, r)
+		r.Header.Add("targetUrl", targetUrl)
+
 		next.ServeHTTP(w, r)
 	})
 }
@@ -70,6 +83,29 @@ func requestTokenValidation(token, companyId string) (*TokenTenantInfo, error) {
 	}
 
 	return &validationResponse, nil
+}
+
+func resolveUrl(tenantInfo *Tenant, r *http.Request) string {
+	var port uint32 = 1
+	var trimmedPath string
+	if strings.Contains(r.URL.Path, "/api/bmrm") {
+		trimmedPath = strings.TrimPrefix(r.URL.Path, "/api/bmrm")
+		port = tenantInfo.BmrmPort
+	} else if strings.Contains(r.URL.Path, "/api/biz") {
+		trimmedPath = strings.TrimPrefix(r.URL.Path, "/api/biz")
+		port = tenantInfo.SgBizPort
+	} else if strings.Contains(r.URL.Path, "/api/tally") {
+		trimmedPath = strings.TrimPrefix(r.URL.Path, "/api/tally")
+		port = tenantInfo.TallySyncPort
+	}
+	if port == 1 && strings.Contains(r.URL.Path, "/api/portal") {
+		trimmedPath = strings.TrimPrefix(r.URL.Path, "/api/portal")
+		baseUrl, exists := services["/api/portal"]
+		if exists {
+			return fmt.Sprintf("%s%s", baseUrl, trimmedPath)
+		}
+	}
+	return fmt.Sprintf("%s:%v%s", tenantInfo.Host, port, trimmedPath)
 }
 
 type Tenant struct {

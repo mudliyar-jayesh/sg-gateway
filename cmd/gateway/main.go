@@ -26,6 +26,7 @@ func main() {
 
 	// apply configurations
 	proxy.LoadServiceMappings(config.Gateway.Services)
+	middleware.LoadServiceMappings(config.Gateway.Services)
 	middleware.LoadValidationConfig(config.Gateway.SgPortalURL, config.Gateway.ExcludedPaths)
 
 	/*

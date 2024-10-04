@@ -1,13 +1,9 @@
 package proxy
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"strings"
-	//"sync"
-	//"time"
 )
 
 var services map[string]string
@@ -47,33 +43,16 @@ func proxyRequest(method, destination string, r *http.Request) (string, error) {
 }
 
 func ResolveUrl(w http.ResponseWriter, r *http.Request) {
-	/*services := map[string]string{
-		"/api/portal": "http://localhost:8080",
-	}*/
-
-	// Forward the request to all matching services
-	for path, target := range services {
-		if !strings.Contains(r.URL.Path, path) {
-			continue
-		}
-		newPath := strings.TrimPrefix(r.URL.Path, path)
-		targetUrl := fmt.Sprintf("%s%s", target, newPath)
-
-		// Forward the request to the target service
-		log.Printf("[==>] Forwarding URL: %s\n", targetUrl)
-		responseBody, err := proxyRequest(r.Method, targetUrl, r)
-		if err != nil {
-			log.Printf("[!] Error from %s: %v\n", targetUrl, err)
-			continue
-		}
-
-		// Send the response back to the client
-		log.Printf("[<==] Forwarding response from %s\n", targetUrl)
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(responseBody))
-		return // Exit after successfully forwarding the request
+	var targetUrl = r.Header.Get("targetUrl")
+	log.Printf("[==>] Forwarding URL: %s\n", targetUrl)
+	responseBody, err := proxyRequest(r.Method, targetUrl, r)
+	if err != nil {
+		log.Printf("[!] Error from %s: %v\n", targetUrl, err)
+		w.WriteHeader(http.StatusNotFound)
+		return
 	}
-
-	// If no matching services were found, return a 404 response
-	http.Error(w, "No matching service found", http.StatusNotFound)
+	// Send the response back to the client
+	log.Printf("[<==] Forwarding response from %s\n", targetUrl)
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(responseBody))
 }
